@@ -5,19 +5,6 @@ databases:
     plan: free
 
 services:
-  # Redis as a Private Service (Docker) to attempt to stay within free tier limits
-  # Note: Private services on Render also have limits on the free tier.
-  - type: pserv
-    name: crm_redis
-    runtime: docker
-    image: redis:7-alpine
-    plan: free
-    envVars:
-      - key: REDIS_PASSWORD
-        generateValue: true
-    # Private services are only accessible internally via host:port
-    # Render exposes the internal URL as host:port
-
   - type: web
     name: crm-backend
     runtime: docker
@@ -52,10 +39,8 @@ services:
         fromDatabase:
           name: crm_db
           property: port
-      - key: CELERY_BROKER_URL
-        value: redis://crm_redis:6379/0 # Internal DNS for private service
-      - key: CELERY_RESULT_BACKEND
-        value: redis://crm_redis:6379/0
+      # Redis/Celery removed for Free Tier compatibility.
+      # Use an external provider like Upstash for free Redis if needed.
 
   - type: web
     name: crm-frontend
@@ -65,75 +50,3 @@ services:
     envVars:
       - key: VUE_APP_API_URL
         value: https://crm-backend.onrender.com
-
-  - type: worker
-    name: celery-worker
-    runtime: docker
-    rootDir: ./interview/backend
-    dockerCommand: celery -A config worker --loglevel=info
-    plan: free
-    envVars:
-      - key: DEBUG
-        value: "False"
-      - key: DB_ENGINE
-        value: postgresql
-      - key: DB_NAME
-        fromDatabase:
-          name: crm_db
-          property: database
-      - key: DB_USER
-        fromDatabase:
-          name: crm_db
-          property: user
-      - key: DB_PASSWORD
-        fromDatabase:
-          name: crm_db
-          property: password
-      - key: DB_HOST
-        fromDatabase:
-          name: crm_db
-          property: host
-      - key: DB_PORT
-        fromDatabase:
-          name: crm_db
-          property: port
-      - key: CELERY_BROKER_URL
-        value: redis://crm_redis:6379/0
-      - key: CELERY_RESULT_BACKEND
-        value: redis://crm_redis:6379/0
-
-  - type: worker
-    name: celery-beat
-    runtime: docker
-    rootDir: ./interview/backend
-    dockerCommand: celery -A config beat --loglevel=info
-    plan: free
-    envVars:
-      - key: DEBUG
-        value: "False"
-      - key: DB_ENGINE
-        value: postgresql
-      - key: DB_NAME
-        fromDatabase:
-          name: crm_db
-          property: database
-      - key: DB_USER
-        fromDatabase:
-          name: crm_db
-          property: user
-      - key: DB_PASSWORD
-        fromDatabase:
-          name: crm_db
-          property: password
-      - key: DB_HOST
-        fromDatabase:
-          name: crm_db
-          property: host
-      - key: DB_PORT
-        fromDatabase:
-          name: crm_db
-          property: port
-      - key: CELERY_BROKER_URL
-        value: redis://crm_redis:6379/0
-      - key: CELERY_RESULT_BACKEND
-        value: redis://crm_redis:6379/0
