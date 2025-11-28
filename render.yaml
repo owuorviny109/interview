@@ -1,7 +1,7 @@
 databases:
   - name: crm_db
     databaseName: crm_db
-    user: postgres
+    user: crm_user
     plan: free
 
   - name: crm_redis
@@ -61,10 +61,7 @@ services:
     plan: free
     envVars:
       - key: VUE_APP_API_URL
-        fromService:
-          type: web
-          name: crm-backend
-          property: url
+        value: https://crm-backend.onrender.com # UPDATE THIS after deployment with the actual backend URL
 
   - type: worker
     name: celery-worker
