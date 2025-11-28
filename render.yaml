@@ -9,7 +9,7 @@ services:
     name: crm-backend
     runtime: docker
     rootDir: ./interview/backend
-    dockerCommand: sh -c "chmod +x start_prod.sh && ./start_prod.sh"
+    dockerCommand: ./start_prod.sh
     plan: free
     envVars:
       - key: SECRET_KEY

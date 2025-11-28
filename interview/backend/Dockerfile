@@ -18,6 +18,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy project
 COPY . /app/
 
+# Make entrypoint executable
+RUN chmod +x /app/start_prod.sh
+
 # Collect static files
 RUN python manage.py collectstatic --noinput || true
 
