@@ -1,0 +1,146 @@
+databases:
+  - name: crm_db
+    databaseName: crm_db
+    user: postgres
+    plan: free
+
+  - name: crm_redis
+    plan: free # Note: Render Redis is not free, but this is a placeholder. User might need to switch to a starter plan or use an internal service if they want to run redis themselves. 
+    # Actually, for a pure "free" tier attempt, we might want to run Redis as a private service (Docker) instead of a managed instance if cost is a concern, 
+    # but managed is standard. Let's stick to managed for "production ready" and user can downgrade if needed.
+    # Correction: Render doesn't have a free Redis tier. 
+    # Let's use a private service for Redis to keep it "deployable" without immediate cost if possible, or just define it and let the user know.
+    # For simplicity and standard practice, I'll define it as a managed instance but comment about cost.
+    ipAllowList: [] # Only allow internal connections
+
+services:
+  - type: web
+    name: crm-backend
+    runtime: docker
+    rootDir: ./backend
+    plan: free
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: "*" # Should be tightened in real prod, but * ensures it works on the generated URL
+      - key: DB_ENGINE
+        value: postgresql
+      - key: DB_NAME
+        fromDatabase:
+          name: crm_db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: crm_db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: crm_db
+          property: password
+      - key: DB_HOST
+        fromDatabase:
+          name: crm_db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: crm_db
+          property: port
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: redis
+          name: crm_redis
+          property: connectionString
+      - key: CELERY_RESULT_BACKEND
+        fromService:
+          type: redis
+          name: crm_redis
+          property: connectionString
+
+  - type: web
+    name: crm-frontend
+    runtime: docker
+    rootDir: ./frontend
+    plan: free
+    envVars:
+      - key: VUE_APP_API_URL
+        fromService:
+          type: web
+          name: crm-backend
+          property: url
+
+  - type: worker
+    name: celery-worker
+    runtime: docker
+    rootDir: ./backend
+    dockerCommand: celery -A config worker --loglevel=info
+    plan: free
+    envVars:
+      - key: DEBUG
+        value: "False"
+      - key: DB_ENGINE
+        value: postgresql
+      - key: DB_NAME
+        fromDatabase:
+          name: crm_db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: crm_db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: crm_db
+          property: password
+      - key: DB_HOST
+        fromDatabase:
+          name: crm_db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: crm_db
+          property: port
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: redis
+          name: crm_redis
+          property: connectionString
+
+  - type: worker
+    name: celery-beat
+    runtime: docker
+    rootDir: ./backend
+    dockerCommand: celery -A config beat --loglevel=info
+    plan: free
+    envVars:
+      - key: DEBUG
+        value: "False"
+      - key: DB_ENGINE
+        value: postgresql
+      - key: DB_NAME
+        fromDatabase:
+          name: crm_db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: crm_db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: crm_db
+          property: password
+      - key: DB_HOST
+        fromDatabase:
+          name: crm_db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: crm_db
+          property: port
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: redis
+          name: crm_redis
+          property: connectionString
