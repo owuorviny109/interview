@@ -4,11 +4,20 @@ databases:
     user: crm_user
     plan: free
 
-  - name: crm_redis
-    plan: free # Note: Render Redis is not free.
-    ipAllowList: [] # Only allow internal connections
-
 services:
+  # Redis as a Private Service (Docker) to attempt to stay within free tier limits
+  # Note: Private services on Render also have limits on the free tier.
+  - type: pserv
+    name: crm_redis
+    runtime: docker
+    image: redis:7-alpine
+    plan: free
+    envVars:
+      - key: REDIS_PASSWORD
+        generateValue: true
+    # Private services are only accessible internally via host:port
+    # Render exposes the internal URL as host:port
+
   - type: web
     name: crm-backend
     runtime: docker
@@ -44,15 +53,9 @@ services:
           name: crm_db
           property: port
       - key: CELERY_BROKER_URL
-        fromService:
-          type: redis
-          name: crm_redis
-          property: connectionString
+        value: redis://crm_redis:6379/0 # Internal DNS for private service
       - key: CELERY_RESULT_BACKEND
-        fromService:
-          type: redis
-          name: crm_redis
-          property: connectionString
+        value: redis://crm_redis:6379/0
 
   - type: web
     name: crm-frontend
@@ -61,7 +64,7 @@ services:
     plan: free
     envVars:
       - key: VUE_APP_API_URL
-        value: https://crm-backend.onrender.com # UPDATE THIS after deployment with the actual backend URL
+        value: https://crm-backend.onrender.com
 
   - type: worker
     name: celery-worker
@@ -95,10 +98,9 @@ services:
           name: crm_db
           property: port
       - key: CELERY_BROKER_URL
-        fromService:
-          type: redis
-          name: crm_redis
-          property: connectionString
+        value: redis://crm_redis:6379/0
+      - key: CELERY_RESULT_BACKEND
+        value: redis://crm_redis:6379/0
 
   - type: worker
     name: celery-beat
@@ -132,7 +134,6 @@ services:
           name: crm_db
           property: port
       - key: CELERY_BROKER_URL
-        fromService:
-          type: redis
-          name: crm_redis
-          property: connectionString
+        value: redis://crm_redis:6379/0
+      - key: CELERY_RESULT_BACKEND
+        value: redis://crm_redis:6379/0
