@@ -175,7 +175,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useStore } from 'vuex'
 import { useRoute, useRouter } from 'vue-router'
-import { noteAPI, contactAPI, reminderAPI } from '@/services/api'
+import { noteAPI } from '@/services/api'
 
 export default {
   name: 'LeadDetail',

@@ -84,17 +84,7 @@
               <router-link to="/register" class="link">Create one</router-link>
             </p>
           </div>
-          
-          <!-- Demo credentials -->
-          <div class="demo-credentials">
-            <p class="demo-title">Demo Accounts:</p>
-            <div class="demo-account">
-              <strong>Manager:</strong> manager / password123
-            </div>
-            <div class="demo-account">
-              <strong>Agent:</strong> agent / password123
-            </div>
-          </div>
+
         </div>
       </div>
     </div>
